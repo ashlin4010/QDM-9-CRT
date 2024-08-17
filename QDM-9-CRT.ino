@@ -3,7 +3,13 @@
 unsigned int row = 0;
 unsigned char font_row = 0;
 unsigned char character_row = 0;
-unsigned char nondraw_row = 0;
+
+volatile unsigned char nondraw_row = 0;
+
+unsigned char dot_row = 0;
+unsigned char dot_column = 10;
+unsigned char dot_row_old = 0;
+unsigned char dot_column_old = 10;
 
 const unsigned int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
 const unsigned int SCREEN_END = 306;
@@ -11,14 +17,14 @@ const unsigned int SCREEN_END = 306;
 const unsigned char TEXT_ROW_START = 1;
 const unsigned char TEXT_ROW_END = 30;
 
-const unsigned char TEXT_COLUMNS = 23;
+const unsigned char TEXT_COLUMNS = 15;
 const unsigned char TEXT_ROWS = 28;
 
 const unsigned char bitMask = (1 << PB4);  // Bit mask for the pin
 
-const unsigned char bitmap2[28][30] = {
-  {96 + 32,'A','A',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
-  {'|','B','B',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
+unsigned char memory[28][30] = {
+  {'|','A','A',' ',' ',' ',' ',' ','A',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
+  {'|','B','B',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','C','C',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','D','D',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','E','E',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
@@ -88,13 +94,13 @@ ISR(TIMER1_COMPA_vect)
 
   // Delay for row re-trace (has to be just right)
   // Note this delay could be replaced with some other slow action
-  NopDelay<55>();
+  NopDelay<250>();
 
 
   bool drawtime = ((character_row > TEXT_ROW_START) & (character_row < TEXT_ROW_END));
   if (drawtime) {
     const char line = character_row - (TEXT_ROW_START + 1);
-    const unsigned char* text_row = *(bitmap2 + line);
+    const unsigned char* text_row = *(memory + line);
 
     for (char i = 0; i < TEXT_COLUMNS; i++) {
       const char char_i = *(text_row + i) - 32;
@@ -106,22 +112,6 @@ ISR(TIMER1_COMPA_vect)
       PORTB |= bitMask; // Set HIGH 
     }
   }
-
-  if (!drawtime) {
-    NopDelay<500>();
-
-
-    // if (nondraw_row == 0) {
-    //   NopDelay<200>();
-    // }
-
-    // if (nondraw_row == 1) {
-    //   NopDelay<200>();
-    // }
-
-    nondraw_row ++;
-  }
-  // non-draw line 0-10 and 300 to 306
 
   // font_row is 9 then we are at the end of the char line
   if (font_row > 8 || row > SCREEN_END) {
@@ -143,6 +133,74 @@ ISR(TIMER1_COMPA_vect)
     row = 0;
   } else {
     row++;
+  }
+
+  if (!drawtime) {
+
+    // There are many rows that do not have data to be drawn
+    // for each of those lines we have about 600 CPU cycles untill
+    // the next line (next ISR), we are also at the end of the ISR
+    // so all the house keeing tasks have been completed
+    // so the time that remains is free for our use,
+    // in cause !drawtime where !drawtime we sould have close to 600 CPU cycles
+    // We can do many 600 cycles takses if we keep count as you see below
+
+    // This uses 900 cycles over 3 ish frames and works well
+    /* 
+    if (nondraw_row == 0) {
+      NopDelay<300>();
+    }
+
+    if (nondraw_row == 1) {
+      NopDelay<300>();
+    }
+
+    if (nondraw_row == 3) {
+      NopDelay<300>();
+    }
+    */
+
+    // if (nondraw_row == 0) {
+    //   NopDelay<600>();
+    // } 
+    // if (nondraw_row == 1) {
+    //   NopDelay<300>();
+    // }
+
+    // NopDelay<10>();
+
+
+    // This moves a character up and down the screen
+    // It is done in steps, each step uses less then 600 cycles
+    // despite this if the three tasks take different amounts of time
+    // the image on the screen will oscillate horizontally
+    // For some reason I can't figure out a variation in runtime caues jitter on the screen
+    // I am certain that the ISR is completing within the required time
+    if (nondraw_row == 0) {
+      memory[dot_row][dot_column] = 96 + 32;
+      memory[dot_row_old][dot_column_old] = ' ';
+    }
+    
+    if (nondraw_row == 1) {
+      // save the old position
+      dot_row_old = dot_row;
+      dot_column_old = dot_column;
+
+      if (dot_row > 10){
+        dot_row = 5;
+      } else {
+        dot_row++;
+        NopDelay<1>();
+      }
+    }
+
+    // No need for out counter to go all the way to 255
+    if (nondraw_row > 60) {
+      nondraw_row = 0;
+    } else {
+      nondraw_row++;
+      NopDelay<1>();
+    }
   }
 
 }
@@ -178,7 +236,7 @@ void setup()
   OCR1A = 865;          // Timer Compare1A Register
   TIMSK1 |= B00000010;  // Enable Timer COMPA Interrupt
 
-  // Dot clock
+  // Dot clock Timer2
   TCCR2A = _BV(COM2A0) | _BV(WGM21) | _BV(WGM20); // Fast PWM, toggle OC2A
   TCCR2B = _BV(WGM22) | _BV(CS20);  // No prescaler, timer running at 16 MHz
   OCR2A = 0; // 4mhz (16 / (1+1))
