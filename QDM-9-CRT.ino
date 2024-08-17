@@ -1,19 +1,20 @@
 #include "NopDelay.h"
 
-int row = 0;
-uint8_t font_row = 0;
-uint8_t character_row = 0;
+unsigned int row = 0;
+unsigned char font_row = 0;
+unsigned char character_row = 0;
+unsigned char nondraw_row = 0;
 
-const int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
-const int SCREEN_END = 306;
+const unsigned int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
+const unsigned int SCREEN_END = 306;
 
-const uint8_t TEXT_ROW_START = 1;
-const uint8_t TEXT_ROW_END = 30;
+const unsigned char TEXT_ROW_START = 1;
+const unsigned char TEXT_ROW_END = 30;
 
-const uint8_t TEXT_COLUMNS = 25;
-const uint8_t TEXT_ROWS = 28;
+const unsigned char TEXT_COLUMNS = 23;
+const unsigned char TEXT_ROWS = 28;
 
-const uint8_t bitMask = (1 << PB4);  // Bit mask for the pin
+const unsigned char bitMask = (1 << PB4);  // Bit mask for the pin
 
 const unsigned char bitmap2[28][30] = {
   {96 + 32,'A','A',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
@@ -89,7 +90,9 @@ ISR(TIMER1_COMPA_vect)
   // Note this delay could be replaced with some other slow action
   NopDelay<55>();
 
-  if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
+
+  bool drawtime = ((character_row > TEXT_ROW_START) & (character_row < TEXT_ROW_END));
+  if (drawtime) {
     const char line = character_row - (TEXT_ROW_START + 1);
     const unsigned char* text_row = *(bitmap2 + line);
 
@@ -103,6 +106,22 @@ ISR(TIMER1_COMPA_vect)
       PORTB |= bitMask; // Set HIGH 
     }
   }
+
+  if (!drawtime) {
+    NopDelay<500>();
+
+
+    // if (nondraw_row == 0) {
+    //   NopDelay<200>();
+    // }
+
+    // if (nondraw_row == 1) {
+    //   NopDelay<200>();
+    // }
+
+    nondraw_row ++;
+  }
+  // non-draw line 0-10 and 300 to 306
 
   // font_row is 9 then we are at the end of the char line
   if (font_row > 8 || row > SCREEN_END) {
@@ -125,6 +144,7 @@ ISR(TIMER1_COMPA_vect)
   } else {
     row++;
   }
+
 }
 
 void setup()
