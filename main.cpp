@@ -6,23 +6,28 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
+#include "NopConstants.h"
 #include "NopDelay.h"
 
+#define MY_CONSTANT "Hello"  // Example constant
 
 const int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
 const int SCREEN_END = 306;
 const uint8_t TEXT_ROW_START = 1;
 const uint8_t TEXT_ROW_END = 30;
-const uint8_t TEXT_COLUMNS = 25;
+const uint8_t TEXT_COLUMNS = 20;
 const uint8_t TEXT_ROWS = 28;
 const uint8_t bitMask = (1 << PB4);  // Bit mask for the pin
 
+volatile uint8_t int_time = 0x00;
+
 int row = 0;
+volatile bool run = true;
 uint8_t font_row = 0;
 uint8_t character_row = 0;
 
 
-const unsigned char bitmap2[28][30] = {
+unsigned char memory[28][30] = {
   {96 + 32,'A','A',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','B','B',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','C','C',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
@@ -85,17 +90,27 @@ void setupTimers() {
     TCCR2B = 0;
     TIMSK2 &= ~(1 << TOIE2);  // Disable Timer2 overflow interrupt
 
-    // Initialize Timer1
-    TCCR1A = 0;               // Set Timer1 Control Register A to 0
-    TCCR1B = 0;               // Set Timer1 Control Register B to 0
-    TCCR1B |= (1 << CS10);   // Set prescaler to 1 (no prescaling)
-    OCR1A = 865;             // Set Timer1 Compare Match A Register
-    TIMSK1 |= (1 << OCIE1A); // Enable Timer1 Compare Match A interrupt
+    // Initialize Timer1 (Count up to 865, reset to 0 and start interrupt)
+    TCCR1A = 0;                 // Set Timer1 Control Register A to 0
+    TCCR1B = (1 << WGM12);      // Set WGM12 to enable CTC mode
+    TCCR1B |= (1 << CS10);      // Set prescaler to 1 (no prescaling)
+    OCR1A = 865;                // Set Timer1 Compare Match A Register
+    TIMSK1 |= (1 << OCIE1A);    // Enable Timer1 Compare Match A interrupt
 
     // Configure Timer2 for Fast PWM mode
     TCCR2A = (1 << COM2A0) | (1 << WGM21) | (1 << WGM20); // Fast PWM, toggle OC2A
     TCCR2B = (1 << WGM22) | (1 << CS20); // No prescaler, timer running at 16 MHz
     OCR2A = 0; // Set Timer2 Compare Match A Register
+}
+
+void uint8_to_hex_ascii(uint8_t value, char *hex_str) {
+    // Convert high nibble to ASCII
+    hex_str[0] = (value >> 4) + '0';  // Convert high nibble (4 bits) to ASCII
+    if (hex_str[0] > '9') hex_str[0] += 'A' - '9' - 1; // Convert to 'A' to 'F'
+
+    // Convert low nibble to ASCII
+    hex_str[1] = (value & 0x0F) + '0';  // Convert low nibble (4 bits) to ASCII
+    if (hex_str[1] > '9') hex_str[1] += 'A' - '9' - 1; // Convert to 'A' to 'F'
 }
 
 int main()
@@ -104,14 +119,95 @@ int main()
     setupPins();
     sei(); // Enable global interrupts
 
-    while (1) {}
+    uint8_t dot_column = 0;
+    uint8_t dot_column_old = 0;
+    uint8_t dot_row = 0;
+
+    // By having an empy while loop we can exit fast, otherwise we might be delayed by one or two cycles
+    // we also only run during the retrace, that gives us more more time
+    while (1) {
+        while (!run) {}
+        char hex_str[2];
+        uint8_to_hex_ascii(int_time, hex_str);
+
+        memory[15][8] = hex_str[0];
+        memory[15][9] = hex_str[1];
+
+        memory[dot_row][dot_column] = '*';
+        NopDelay<100>();
+        memory[dot_row][dot_column_old] = ' ';
+
+        dot_column_old = dot_column;
+        dot_column++;
+
+        if (dot_column > 19) {
+            dot_column_old = dot_column;
+            dot_column = 0;
+            dot_row++;
+        }
+
+        if (dot_row > 19) {
+            dot_row = 0;
+        }
+        run = false;
+    }
     return 0;
 }
 
 
-// Interrupt Service Routine for Timer1 Compare Match A
+// ISR(TIMER1_COMPA_vect) __attribute__((interrupt)) __attribute__((naked));
+
+// ISR(TIMER1_COMPA_vect) {
+//     // Save the necessary registers
+//     asm volatile (
+//         "PUSH R24\n"  // Save register R24
+//         "PUSH R25\n"  // Save register R25
+//         NOP_3
+//     );
+
+//     OCR1A += 865; // Advance The COMPA Register
+//     PORTB |= (1 << PB1); // Turn on the pulse
+//     NopDelay<50>();
+//     PORTB &= ~(1 << PB1); // Turn off the pulse
+
+//     // Restore the saved registers
+//     asm volatile (
+//         "POP R25\n"   // Restore register R25
+//         "POP R24\n"   // Restore register R24
+//         // Other register restores if needed
+//         "RETI\n"      // Return from interrupt
+//     );
+// }
+
+
 ISR(TIMER1_COMPA_vect) {
-    OCR1A += 865; // Advance The COMPA Register
+    // Look at TCNT1H and TCNT1L
+    int_time = TCNT1L;
+    while (TCNT1L >= 0x32) {};
+
+    // asm volatile (
+    //     "ldi r27, 0x00\n"
+    //     "ldi r26, 0x84\n"
+    //     "ld r5, X\n"
+    //     :
+    //     :
+    //     : "r16", "r5", "r26", "r27" // Clobbered registers
+    // );
+
+    // asm volatile (
+    //     "ldi r27, 0x00\n"
+    //     "ldi r26, 0x84\n"
+    //     "ldi r16, 0x80\n"
+    //     "syncWait:\n"
+    //     "ld r5, X\n"
+    //     "cpse r16, r5\n"
+    //     "rjmp syncWait\n"
+    //     :
+    //     :
+    //     : "r16", "r5", "r26", "r27" // Clobbered registers
+    // );
+
+    
 
     PORTB |= (1 << PB1); // Turn on the pulse
     if (row == 0) {
@@ -131,18 +227,20 @@ ISR(TIMER1_COMPA_vect) {
     NopDelay<55>();
 
     if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
-        const char line = character_row - (TEXT_ROW_START + 1);
-        const unsigned char* text_row = *(bitmap2 + line);
+        const char line = character_row - (TEXT_ROW_START + 1);                 // VAR
+        const unsigned char* text_row = *(memory + line);                      // VAR
 
-            for (char i = 0; i < TEXT_COLUMNS; i++) {
-            const char char_i = *(text_row + i) - 32;
-            const unsigned char* pixel_data = *(FONT + char_i);
-            const unsigned char* offset = pixel_data + font_row;
+            for (unsigned char i = 0; i < TEXT_COLUMNS; i++) {
+            const unsigned char char_i = *(text_row + i) - 32;                  // VAR
+            const unsigned char* pixel_data = *(FONT + char_i);                 // VAR
+            const unsigned char* offset = pixel_data + font_row;                // VAR
 
             PORTD = *offset; 
             PORTB &= ~bitMask; // Set LOW
             PORTB |= bitMask; // Set HIGH 
         }
+    } else {
+        run = true;
     }
 
 
