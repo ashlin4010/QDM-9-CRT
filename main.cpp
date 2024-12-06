@@ -11,6 +11,8 @@
 
 #define MY_CONSTANT "Hello"  // Example constant
 
+extern volatile uint8_t count; // Declare global variable
+
 const int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
 const int SCREEN_END = 306;
 const uint8_t TEXT_ROW_START = 1;
@@ -130,8 +132,8 @@ int main()
         char hex_str[2];
         uint8_to_hex_ascii(int_time, hex_str);
 
-        memory[15][8] = hex_str[0];
-        memory[15][9] = hex_str[1];
+        memory[dot_row][8] = hex_str[0];
+        memory[dot_row][9] = hex_str[1];
 
         memory[dot_row][dot_column] = '*';
         NopDelay<100>();
@@ -180,89 +182,80 @@ int main()
 // }
 
 
-ISR(TIMER1_COMPA_vect) {
-    // Look at TCNT1H and TCNT1L
-    int_time = TCNT1L;
-    while (TCNT1L >= 0x32) {};
+// ISR(TIMER1_COMPA_vect) {
+//     // Look at TCNT1H and TCNT1L
 
-    // asm volatile (
-    //     "ldi r27, 0x00\n"
-    //     "ldi r26, 0x84\n"
-    //     "ld r5, X\n"
-    //     :
-    //     :
-    //     : "r16", "r5", "r26", "r27" // Clobbered registers
-    // );
+//     // asm volatile (
+//     //     "ldi r27, 0x00\n"
+//     //     "ldi r26, 0x84\n"
 
-    // asm volatile (
-    //     "ldi r27, 0x00\n"
-    //     "ldi r26, 0x84\n"
-    //     "ldi r16, 0x80\n"
-    //     "syncWait:\n"
-    //     "ld r5, X\n"
-    //     "cpse r16, r5\n"
-    //     "rjmp syncWait\n"
-    //     :
-    //     :
-    //     : "r16", "r5", "r26", "r27" // Clobbered registers
-    // );
+//     //     "syncWait:\n"
+//     //     "ld r17, X\n"
+//     //     "cpi r17, 0x32\n"
+//     //     "brlo syncWait\n"
+//     //     :
+//     //     :
+//     //     : "r16", "r17", "r26", "r27" // Clobbered registers
+//     // );
+
+//     int_time = TCNT1L; 
 
     
 
-    PORTB |= (1 << PB1); // Turn on the pulse
-    if (row == 0) {
-        PORTB &= ~(1 << PB0); // Start VSYNC (active low)
-    }
+//     PORTB |= (1 << PB1); // Turn on the pulse
+//     if (row == 0) {
+//         PORTB &= ~(1 << PB0); // Start VSYNC (active low)
+//     }
 
-    if (row == VSYNC_ROWS) {
-        PORTB |= (1 << PB0);  // End VSYNC (inactive high)
-    }
+//     if (row == VSYNC_ROWS) {
+//         PORTB |= (1 << PB0);  // End VSYNC (inactive high)
+//     }
 
-    NopDelay<50>();
-    PORTB &= ~(1 << PB1); // Turn off the pulse
-
-
-    // Delay for row re-trace (has to be just right)
-    // Note this delay could be replaced with some other slow action
-    NopDelay<55>();
-
-    if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
-        const char line = character_row - (TEXT_ROW_START + 1);                 // VAR
-        const unsigned char* text_row = *(memory + line);                      // VAR
-
-            for (unsigned char i = 0; i < TEXT_COLUMNS; i++) {
-            const unsigned char char_i = *(text_row + i) - 32;                  // VAR
-            const unsigned char* pixel_data = *(FONT + char_i);                 // VAR
-            const unsigned char* offset = pixel_data + font_row;                // VAR
-
-            PORTD = *offset; 
-            PORTB &= ~bitMask; // Set LOW
-            PORTB |= bitMask; // Set HIGH 
-        }
-    } else {
-        run = true;
-    }
+//     NopDelay<50>();
+//     PORTB &= ~(1 << PB1); // Turn off the pulse
 
 
-    // font_row is 9 then we are at the end of the char line
-    if (font_row > 8 || row > SCREEN_END) {
-        character_row++;
-        font_row = 0;
-    } else {
-        NopDelay<1>();
-        font_row++;
-    }
+//     // Delay for row re-trace (has to be just right)
+//     // Note this delay could be replaced with some other slow action
+//     NopDelay<55>();
 
-    if (character_row > TEXT_ROWS + 1 || row > SCREEN_END) {
-        character_row = 0;
-    } else {
-        NopDelay<1>();
-    }
+//     if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
+//         const char line = character_row - (TEXT_ROW_START + 1);                 // VAR
+//         const unsigned char* text_row = *(memory + line);                      // VAR
 
-    // Reset row counter
-    if (row > SCREEN_END) {
-        row = 0;
-    } else {
-        row++;
-    }
-}
+//             for (unsigned char i = 0; i < TEXT_COLUMNS; i++) {
+//             const unsigned char char_i = *(text_row + i) - 32;                  // VAR
+//             const unsigned char* pixel_data = *(FONT + char_i);                 // VAR
+//             const unsigned char* offset = pixel_data + font_row;                // VAR
+
+//             PORTD = *offset; 
+//             PORTB &= ~bitMask; // Set LOW
+//             PORTB |= bitMask; // Set HIGH 
+//         }
+//     } else {
+//         run = true;
+//     }
+
+
+//     // font_row is 9 then we are at the end of the char line
+//     if (font_row > 8 || row > SCREEN_END) {
+//         character_row++;
+//         font_row = 0;
+//     } else {
+//         NopDelay<1>();
+//         font_row++;
+//     }
+
+//     if (character_row > TEXT_ROWS + 1 || row > SCREEN_END) {
+//         character_row = 0;
+//     } else {
+//         NopDelay<1>();
+//     }
+
+//     // Reset row counter
+//     if (row > SCREEN_END) {
+//         row = 0;
+//     } else {
+//         row++;
+//     }
+// }

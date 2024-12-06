@@ -794,22 +794,22 @@
 				)
 			)
 		)
-		(symbol "Connector:DE9_Plug"
+		(symbol "Connector:DE9_Plug_MountingHoles"
 			(pin_names
 				(offset 1.016) hide)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(property "Reference" "J"
-				(at 0 13.97 0)
+				(at 0 16.51 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 				)
 			)
-			(property "Value" "DE9_Plug"
-				(at 0 -14.605 0)
+			(property "Value" "DE9_Plug_MountingHoles"
+				(at 0 14.605 0)
 				(effects
 					(font
 						(size 1.27 1.27)
@@ -834,7 +834,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "9-pin male plug pin D-SUB connector"
+			(property "Description" "9-pin male plug pin D-SUB connector, Mounting Hole"
 				(at 0 0 0)
 				(effects
 					(font
@@ -843,7 +843,7 @@
 					(hide yes)
 				)
 			)
-			(property "ki_keywords" "connector male plug D-SUB DB9"
+			(property "ki_keywords" "connector plug male D-SUB DB9"
 				(at 0 0 0)
 				(effects
 					(font
@@ -861,7 +861,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "DE9_Plug_0_1"
+			(symbol "DE9_Plug_MountingHoles_0_1"
 				(circle
 					(center -1.778 -10.16)
 					(radius 0.762)
@@ -1082,7 +1082,25 @@
 					)
 				)
 			)
-			(symbol "DE9_Plug_1_1"
+			(symbol "DE9_Plug_MountingHoles_1_1"
+				(pin passive line
+					(at 0 -15.24 90)
+					(length 3.81)
+					(name "PAD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "0"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
 				(pin passive line
 					(at -7.62 -10.16 0)
 					(length 3.81)
@@ -4583,7 +4601,7 @@
 	)
 	(global_label "V_SYNC"
 		(shape input)
-		(at 60.96 161.29 180)
+		(at 60.96 158.75 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4593,7 +4611,7 @@
 		)
 		(uuid "b64d5fb4-8065-49ca-a955-8911d64b617d")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 51.02 161.29 0)
+			(at 51.02 158.75 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4605,7 +4623,7 @@
 	)
 	(global_label "VIDEO"
 		(shape input)
-		(at 60.96 158.75 180)
+		(at 60.96 161.29 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
@@ -4615,7 +4633,7 @@
 		)
 		(uuid "c6f2dcb6-5721-4b91-b83e-11c89e7d29ed")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 52.5319 158.75 0)
+			(at 52.5319 161.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -4972,97 +4990,6 @@
 			(project ""
 				(path "/e222e52e-83a8-4556-a94e-a22482ba41c4"
 					(reference "#PWR09")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "Connector:DE9_Plug")
-		(at 262.89 110.49 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "0a15d533-fc33-4a85-91fa-a599251b3bfc")
-		(property "Reference" "J5"
-			(at 267.97 109.2199 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "DE9_Plug"
-			(at 267.97 111.7599 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Connector_Dsub:DSUB-9_Female_Horizontal_P2.77x2.84mm_EdgePinOffset7.70mm_Housed_MountingHolesOffset9.12mm"
-			(at 262.89 110.49 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" "~"
-			(at 262.89 110.49 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "9-pin male plug pin D-SUB connector"
-			(at 262.89 110.49 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "8"
-			(uuid "e2b06090-9ddf-4af0-9eff-95c0e78cea17")
-		)
-		(pin "9"
-			(uuid "aa2f827c-e8a7-4719-a7fa-ebe043d1129f")
-		)
-		(pin "1"
-			(uuid "4db971da-a5a6-440c-9f4f-d3d6f4854377")
-		)
-		(pin "3"
-			(uuid "9dfb8cea-3aa3-4bb6-ad26-a597014de280")
-		)
-		(pin "5"
-			(uuid "8c928611-81a0-425f-9a1d-7ee53228ba86")
-		)
-		(pin "7"
-			(uuid "9b7c5493-30a7-4813-a678-4cc0817b2b3d")
-		)
-		(pin "2"
-			(uuid "01239e56-b8c4-4c54-a6f4-9d67e01394c5")
-		)
-		(pin "4"
-			(uuid "7089a325-0f41-4f94-be98-094b226af0c0")
-		)
-		(pin "6"
-			(uuid "79025b52-65fb-4edf-8b94-c83a874dc4bb")
-		)
-		(instances
-			(project ""
-				(path "/e222e52e-83a8-4556-a94e-a22482ba41c4"
-					(reference "J5")
 					(unit 1)
 				)
 			)
@@ -6664,6 +6591,100 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:DE9_Plug_MountingHoles")
+		(at 262.89 110.49 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "a257ee47-1a1a-433a-8bb1-b7abfe94cf8a")
+		(property "Reference" "J4"
+			(at 267.97 109.2199 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "DE9_Plug_MountingHoles"
+			(at 267.97 111.7599 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_Dsub:DSUB-9_Female_Horizontal_P2.77x2.84mm_EdgePinOffset7.70mm_Housed_MountingHolesOffset9.12mm"
+			(at 262.89 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 262.89 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "9-pin male plug pin D-SUB connector, Mounting Hole"
+			(at 262.89 110.49 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "8"
+			(uuid "bf7d5142-9488-4718-bd80-906ced20b64e")
+		)
+		(pin "0"
+			(uuid "e6ff6222-961c-48f8-be4e-a65922522f11")
+		)
+		(pin "9"
+			(uuid "a7f688cd-2721-4650-ac73-d639bf559e6c")
+		)
+		(pin "4"
+			(uuid "c22b8d41-59d3-44d1-939d-650acbd72937")
+		)
+		(pin "6"
+			(uuid "84c3c06f-fbbe-4694-b125-b8556970b9ce")
+		)
+		(pin "7"
+			(uuid "98e48f1a-1df7-4225-9b1e-d62318387a57")
+		)
+		(pin "3"
+			(uuid "dff8222c-714a-42cc-84f8-fb630b1eb399")
+		)
+		(pin "5"
+			(uuid "fa73ab9a-8a2a-4c39-958f-1661e76a6ba9")
+		)
+		(pin "1"
+			(uuid "d0a176f7-96dc-4570-bdc2-775ad05cd2ba")
+		)
+		(pin "2"
+			(uuid "913653aa-5a3e-48c9-801d-a1ae167d48a4")
+		)
+		(instances
+			(project ""
+				(path "/e222e52e-83a8-4556-a94e-a22482ba41c4"
+					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 45.72 80.01 0)
 		(unit 1)
@@ -7325,6 +7346,72 @@
 			(project ""
 				(path "/e222e52e-83a8-4556-a94e-a22482ba41c4"
 					(reference "JP3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 262.89 125.73 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d2087add-33a0-471e-8206-46e8d5bed2d9")
+		(property "Reference" "#PWR022"
+			(at 262.89 132.08 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 262.89 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 262.89 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 262.89 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 262.89 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "8738cc2c-2892-47d3-9a3a-da50356aacb3")
+		)
+		(instances
+			(project "pcb"
+				(path "/e222e52e-83a8-4556-a94e-a22482ba41c4"
+					(reference "#PWR022")
 					(unit 1)
 				)
 			)
