@@ -2,32 +2,30 @@
 # Format documentation: https://kicad.org/help/file-formats/
 
 # Temporary files
-*.000
-*.bak
-*.bck
-*.kicad_pcb-bak
-*.kicad_sch-bak
-*-backups
-*.kicad_prl
-*.sch-bak
-*~
-_autosave-*
-*.tmp
-*-save.pro
-*-save.kicad_pcb
-fp-info-cache
+pcb/*.000
+pcb/*.bak
+pcb/*.bck
+pcb/*.kicad_pcb-bak
+pcb/*.kicad_sch-bak
+pcb/*-backups
+pcb/*.kicad_prl
+pcb/*.sch-bak
+pcb/*~
+pcb/_autosave-*
+pcb/*.tmp
+pcb/*-save.pro
+pcb/*-save.kicad_pcb
+pcb/fp-info-cache
 
 # Netlist files (exported from Eeschema)
-*.net
+pcb/*.net
 
 # Autorouter files (exported from Pcbnew)
-*.dsn
-*.ses
+pcb/*.dsn
+pcb/*.ses
 
 # Exported BOM files
-*.xml
-*.csv
+pcb/*.xml
+pcb/*.csv
 
 build
-pcb/pcb-backups
-pcb/fp-info-cache
