@@ -1,6 +1,7 @@
 # QDM-9-CRT NANO Driver #
 
-This repository contains the PCB and software to build a simple TTL video driver using an Arduino Nano
+This repository contains the PCB and software to build a simple TTL video driver using an Arduino Nano.
+
 It also has a Gamepad plug. 
 
 ![CRT](docs/crt+case.jpg "CRT")
