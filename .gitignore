@@ -29,3 +29,4 @@ pcb/*.xml
 pcb/*.csv
 
 build
+.vscode
