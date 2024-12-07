@@ -6,30 +6,23 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#include "NopConstants.h"
 #include "NopDelay.h"
 
-#define MY_CONSTANT "Hello"  // Example constant
-
-extern volatile uint8_t count; // Declare global variable
 
 const int VSYNC_ROWS = 10; // The number of rows to keep the pulse on
 const int SCREEN_END = 306;
 const uint8_t TEXT_ROW_START = 1;
 const uint8_t TEXT_ROW_END = 30;
-const uint8_t TEXT_COLUMNS = 20;
+const uint8_t TEXT_COLUMNS = 25;
 const uint8_t TEXT_ROWS = 28;
 const uint8_t bitMask = (1 << PB4);  // Bit mask for the pin
 
-volatile uint8_t int_time = 0x00;
-
 int row = 0;
-volatile bool run = true;
 uint8_t font_row = 0;
 uint8_t character_row = 0;
 
 
-unsigned char memory[28][30] = {
+const unsigned char bitmap2[28][30] = {
   {96 + 32,'A','A',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','B','B',96 + 32,96 + 32,' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
   {'|','C','C',' ',' ',' ',' ',' ',' ',' ', ' ',' ',' ',' ',' ',' ','|','|','8','9', '0','1','2','3','4','5','6','7','8','9'},
@@ -105,157 +98,72 @@ void setupTimers() {
     OCR2A = 0; // Set Timer2 Compare Match A Register
 }
 
-void uint8_to_hex_ascii(uint8_t value, char *hex_str) {
-    // Convert high nibble to ASCII
-    hex_str[0] = (value >> 4) + '0';  // Convert high nibble (4 bits) to ASCII
-    if (hex_str[0] > '9') hex_str[0] += 'A' - '9' - 1; // Convert to 'A' to 'F'
-
-    // Convert low nibble to ASCII
-    hex_str[1] = (value & 0x0F) + '0';  // Convert low nibble (4 bits) to ASCII
-    if (hex_str[1] > '9') hex_str[1] += 'A' - '9' - 1; // Convert to 'A' to 'F'
-}
-
 int main()
 {
     setupTimers();
     setupPins();
     sei(); // Enable global interrupts
 
-    uint8_t dot_column = 0;
-    uint8_t dot_column_old = 0;
-    uint8_t dot_row = 0;
-
-    // By having an empy while loop we can exit fast, otherwise we might be delayed by one or two cycles
-    // we also only run during the retrace, that gives us more more time
-    while (1) {
-        while (!run) {}
-        char hex_str[2];
-        uint8_to_hex_ascii(int_time, hex_str);
-
-        memory[dot_row][8] = hex_str[0];
-        memory[dot_row][9] = hex_str[1];
-
-        memory[dot_row][dot_column] = '*';
-        NopDelay<100>();
-        memory[dot_row][dot_column_old] = ' ';
-
-        dot_column_old = dot_column;
-        dot_column++;
-
-        if (dot_column > 19) {
-            dot_column_old = dot_column;
-            dot_column = 0;
-            dot_row++;
-        }
-
-        if (dot_row > 19) {
-            dot_row = 0;
-        }
-        run = false;
-    }
+    while (1) {}
     return 0;
 }
 
 
-// ISR(TIMER1_COMPA_vect) __attribute__((interrupt)) __attribute__((naked));
+// Interrupt Service Routine for Timer1 Compare Match A
+ISR(TIMER1_COMPA_vect) {
 
-// ISR(TIMER1_COMPA_vect) {
-//     // Save the necessary registers
-//     asm volatile (
-//         "PUSH R24\n"  // Save register R24
-//         "PUSH R25\n"  // Save register R25
-//         NOP_3
-//     );
+    PORTB |= (1 << PB1); // Turn on the pulse
+    if (row == 0) {
+        PORTB &= ~(1 << PB0); // Start VSYNC (active low)
+    }
 
-//     OCR1A += 865; // Advance The COMPA Register
-//     PORTB |= (1 << PB1); // Turn on the pulse
-//     NopDelay<50>();
-//     PORTB &= ~(1 << PB1); // Turn off the pulse
+    if (row == VSYNC_ROWS) {
+        PORTB |= (1 << PB0);  // End VSYNC (inactive high)
+    }
 
-//     // Restore the saved registers
-//     asm volatile (
-//         "POP R25\n"   // Restore register R25
-//         "POP R24\n"   // Restore register R24
-//         // Other register restores if needed
-//         "RETI\n"      // Return from interrupt
-//     );
-// }
+    NopDelay<50>();
+    PORTB &= ~(1 << PB1); // Turn off the pulse
 
 
-// ISR(TIMER1_COMPA_vect) {
-//     // Look at TCNT1H and TCNT1L
+    // Delay for row re-trace (has to be just right)
+    // Note this delay could be replaced with some other slow action
+    NopDelay<55>();
 
-//     // asm volatile (
-//     //     "ldi r27, 0x00\n"
-//     //     "ldi r26, 0x84\n"
+    if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
+        const char line = character_row - (TEXT_ROW_START + 1);
+        const unsigned char* text_row = *(bitmap2 + line);
 
-//     //     "syncWait:\n"
-//     //     "ld r17, X\n"
-//     //     "cpi r17, 0x32\n"
-//     //     "brlo syncWait\n"
-//     //     :
-//     //     :
-//     //     : "r16", "r17", "r26", "r27" // Clobbered registers
-//     // );
+            for (char i = 0; i < TEXT_COLUMNS; i++) {
+            const char char_i = *(text_row + i) - 32;
+            const unsigned char* pixel_data = *(FONT + char_i);
+            const unsigned char* offset = pixel_data + font_row;
 
-//     int_time = TCNT1L; 
-
-    
-
-//     PORTB |= (1 << PB1); // Turn on the pulse
-//     if (row == 0) {
-//         PORTB &= ~(1 << PB0); // Start VSYNC (active low)
-//     }
-
-//     if (row == VSYNC_ROWS) {
-//         PORTB |= (1 << PB0);  // End VSYNC (inactive high)
-//     }
-
-//     NopDelay<50>();
-//     PORTB &= ~(1 << PB1); // Turn off the pulse
+            PORTD = *offset; 
+            PORTB &= ~bitMask; // Set LOW
+            PORTB |= bitMask; // Set HIGH 
+        }
+    }
 
 
-//     // Delay for row re-trace (has to be just right)
-//     // Note this delay could be replaced with some other slow action
-//     NopDelay<55>();
+    // font_row is 9 then we are at the end of the char line
+    if (font_row > 8 || row > SCREEN_END) {
+        character_row++;
+        font_row = 0;
+    } else {
+        NopDelay<1>();
+        font_row++;
+    }
 
-//     if (character_row > TEXT_ROW_START && character_row < TEXT_ROW_END) {
-//         const char line = character_row - (TEXT_ROW_START + 1);                 // VAR
-//         const unsigned char* text_row = *(memory + line);                      // VAR
+    if (character_row > TEXT_ROWS + 1 || row > SCREEN_END) {
+        character_row = 0;
+    } else {
+        NopDelay<1>();
+    }
 
-//             for (unsigned char i = 0; i < TEXT_COLUMNS; i++) {
-//             const unsigned char char_i = *(text_row + i) - 32;                  // VAR
-//             const unsigned char* pixel_data = *(FONT + char_i);                 // VAR
-//             const unsigned char* offset = pixel_data + font_row;                // VAR
-
-//             PORTD = *offset; 
-//             PORTB &= ~bitMask; // Set LOW
-//             PORTB |= bitMask; // Set HIGH 
-//         }
-//     } else {
-//         run = true;
-//     }
-
-
-//     // font_row is 9 then we are at the end of the char line
-//     if (font_row > 8 || row > SCREEN_END) {
-//         character_row++;
-//         font_row = 0;
-//     } else {
-//         NopDelay<1>();
-//         font_row++;
-//     }
-
-//     if (character_row > TEXT_ROWS + 1 || row > SCREEN_END) {
-//         character_row = 0;
-//     } else {
-//         NopDelay<1>();
-//     }
-
-//     // Reset row counter
-//     if (row > SCREEN_END) {
-//         row = 0;
-//     } else {
-//         row++;
-//     }
-// }
+    // Reset row counter
+    if (row > SCREEN_END) {
+        row = 0;
+    } else {
+        row++;
+    }
+}

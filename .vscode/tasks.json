@@ -10,9 +10,9 @@
                 "${file}",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}",
-                "-Os",
                 "-mmcu=atmega328p",
-                "-DF_CPU=16000000UL"
+                "-DF_CPU=16000000UL",
+                "-Os"
             ],
             "options": {
                 "cwd": "${fileDirname}"

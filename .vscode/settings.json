@@ -2,9 +2,6 @@
     "AVR.reporter.arguments": [
         "-C"
     ],
-    "AVR.compiler.arguments": [
-        "-Os"
-    ],
     "AVR.source.compiler": "/usr/bin/avr-gcc",
     "AVR.programmer.tool": "/usr/bin/avrdude",
     "AVR.source.libraries": [],
